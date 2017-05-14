@@ -1,0 +1,12 @@
+---
+# defaults file for rbicker.cobbler
+
+# password=root 
+cobbler_default_password_crypted: $1$asdf3421$dEw9zCFxyo9KG3Y2xsd/n0
+cobbler_manage_dns: no
+cobbler_iso_path: /etc/cobbler/distro-isos
+cobbler_iso_mount_path: /mnt/cobbler
+cobbler_profiles:
+  - name: centos7
+    arch: x86_64
+    url: http://mirror.switch.ch/ftp/mirror/centos/7/isos/x86_64/CentOS-7-x86_64-DVD-1611.iso
