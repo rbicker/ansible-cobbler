@@ -3,9 +3,12 @@
 
 # password=root 
 cobbler_default_password_crypted: $1$asdf3421$dEw9zCFxyo9KG3Y2xsd/n0
-cobbler_manage_dns: no
-cobbler_iso_path: /etc/cobbler/distro-isos
-cobbler_iso_mount_path: /mnt/cobbler
+cobbler_pxe_just_once: 0
+cobbler_manage_dhcp: 0
+cobbler_manage_dns: 0
+cobbler_isos_path: /etc/cobbler/distro-isos
+cobbler_isos_mount_path: /mnt/cobbler
+cobbler_isos_delete: true
 cobbler_profiles:
   - name: centos7
     arch: x86_64
