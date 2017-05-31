@@ -26,6 +26,7 @@
     - bind
     - bind-chroot
     - cobbler
+    - cobbler-web
 
 - name: ensure httpd can talk to cobblerd (selinux)
   seboolean:
@@ -57,6 +58,21 @@
     state: started
   notify: restart apache
 
+- name: ensure cobbler templates are present
+  template:
+    src: "{{ item }}.template"
+    dest: "/etc/cobbler/{{ item }}.template"
+  with_items:
+    - dhcp
+    - dnsmasq
+    - named
+    - rsync
+    - secondary
+    - tftpd
+    - zone
+  notify: restart cobblerd
+  when: cobbler_templates_force
+
 - name: ensure server is set in /etc/cobbler/settings
   lineinfile:
     line: "server: {{ ansible_default_ipv4.address }}"
@@ -64,7 +80,7 @@
     dest: /etc/cobbler/settings
   notify: restart cobblerd
 
-- name: ensure server is set in /etc/cobbler/settings
+- name: ensure next_server is set in /etc/cobbler/settings
   lineinfile:
     line: "next_server: {{ ansible_default_ipv4.address }}"
     regexp: "^next_server:"
@@ -84,6 +100,34 @@
     regexp: "^pxe_just_once:"
     dest: /etc/cobbler/settings
   notify: restart cobblerd
+
+- name: ensure authn_configfile is set in /etc/cobbler/modules.conf for cobbler web
+  lineinfile:
+    line: "module = authn_configfile"
+    regexp: "^module = authn"
+    insertafter: "[authentication]"
+    dest: /etc/cobbler/modules.conf
+  notify:
+   - restart cobblerd
+   - restart apache
+
+- name: ensure authz_allowall is set in /etc/cobbler/modules.conf for cobbler web
+  lineinfile:
+    line: "module = authz_allowall"
+    regexp: "^module = authz"
+    insertafter: "[authorization]"
+    dest: /etc/cobbler/modules.conf
+  notify:
+   - restart cobblerd
+   - restart apache
+
+- name: ensure cobbler web password is set
+  copy:
+    content: cobbler:Cobbler:{{ cobbler_web_password_crypted }}
+    dest: /etc/cobbler/users.digest
+  notify:
+   - restart cobblerd
+   - restart apache
 
 - name: ensure dhcp management is enabled in /etc/cobbler/settings
   lineinfile:
@@ -174,9 +218,24 @@
   when: item.changed == true
   with_items: "{{ cobbler_profiles_folders.results }}"
 
+- name: ensure kickstart template is copied to cobbler server
+  template:
+    src: "{{ item.kickstart }}.ks.j2"
+    dest: "{{ cobbler_kickstart_path }}/{{ item.kickstart }}.ks"
+  when: item.kickstart is defined
+  register: cobbler_profile_kickstarts
+  with_items: "{{ cobbler_profiles }}"
+
+- name: ensure kickstart option is set
+  shell: "cobbler profile edit --name={{item.item.name}}-{{ item.item.arch }} --kickstart={{ cobbler_kickstart_path }}/{{ item.item.kickstart }}.ks"
+  when: item.changed == true
+  with_items: "{{ cobbler_profile_kickstarts.results }}"
+  notify: cobbler sync
+
 - name: ensure isos are unmounted after import
   mount:
     path: "{{ cobbler_isos_mount_path }}/{{ item.item.name }}"
+    state: unmounted
   when: item.changed == true
   with_items: "{{ cobbler_profiles_folders.results }}"
 
