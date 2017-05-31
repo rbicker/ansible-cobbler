@@ -23,10 +23,24 @@
     - debmirror
     - pykickstart
     - fence-agents-all
-    - bind
-    - bind-chroot
     - cobbler
     - cobbler-web
+    - xinetd
+
+- name: ensure bind is installed
+  yum:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - bind
+    - bind-chroot
+  when: cobbler_manage_dns == 1
+
+- name: ensure dhcp is installed
+  yum:
+    name: dhcp
+    state: present
+  when: cobbler_manage_dhcp == 1
 
 - name: ensure httpd can talk to cobblerd (selinux)
   seboolean:
@@ -39,9 +53,9 @@
     name: httpd
     enabled: yes
 
-- name: ensure tftp service is enabled and started
+- name: ensure xinetd service is enabled and started
   service:
-    name: tftp
+    name: xinetd
     enabled: yes
     state: started
 
