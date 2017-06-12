@@ -72,7 +72,6 @@
     enabled: yes
   when: cobbler_manage_dhcp == 1
 
-
 - name: ensure cobbler services is enabled and started
   service:
     name: cobblerd
