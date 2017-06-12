@@ -1,5 +1,5 @@
 \$TTL 300
-@                       IN      SOA     $cobbler_server. raphael.bicker.ch. (
+@                       IN      SOA     $cobbler_server. postmaster.example.com. (
                                         $serial   ; Serial
                                         600         ; Refresh
                                         1800         ; Retry
